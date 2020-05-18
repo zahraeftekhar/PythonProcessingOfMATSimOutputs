@@ -46,12 +46,14 @@ endTime_OD = "09:00:00"
 
 ######################################### importing XML file plan ######################################################
 from xml.dom import minidom
-xmlPlan = minidom.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans.xml")
+xmlPlan = minidom.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
+                        "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans.xml")
 itemlistPlan = xmlPlan.getElementsByTagName('person')
 del xmlPlan
 # importing XML file experienced plan
 from xml.dom import minidom
-xmlExperienced = minidom.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans.xml")
+xmlExperienced = minidom.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
+                               "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans.xml")
 itemlistExperienced = xmlExperienced.getElementsByTagName('person')
 del xmlExperienced
 
@@ -107,3 +109,23 @@ def ODmatrixEstimate(m):
     print(np.sum(np.sum(ODMatrix_df, axis=0)))
     print(time.time() - start_time)
     return ODMatrix_df
+if __name__ == '__main__':
+    # OD matrix estimation
+    # start_time = time.time()
+
+    import multiprocessing as mp
+    import numpy as np
+    pool = mp.Pool(processes=mp.cpu_count())
+    partialODs = pool.map(ODmatrixEstimate, range(len(itemlistPlan[0:1000])))
+    totalOD = sum(partialODs)
+    # print(time.time() - start_time)
+    TXTFileName = "D:/ax/OD6_9.CSV"
+    # partialODs.to_csv(TXTFileName, index=True, header=True)
+    del globals()['itemlisPlant']
+    del globals()['itemlisExperienced']
+    del globals()['startTime_OD']
+    del globals()['endTime_OD']
+    del globals()['odsize']
+    del globals()['matrixRowColNames']
+    del globals()['inputs']
+    del globals()['tazNames']

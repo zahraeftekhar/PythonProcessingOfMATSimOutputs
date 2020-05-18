@@ -118,6 +118,7 @@ print(time.time() - start_time)
 TXTFileName = "D:/ax/OD6_9.CSV"
 ODMatrix_df.to_csv(TXTFileName, index=True, header=True)
 ################ FINAL decision: this code fraction works for OD estimation from ground truth .XML data
+################ Elapsed time: 5552.5 seconds
 
 
 
