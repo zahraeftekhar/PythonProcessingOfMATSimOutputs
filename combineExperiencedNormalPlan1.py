@@ -129,3 +129,4 @@ if __name__ == '__main__':
     del globals()['matrixRowColNames']
     del globals()['inputs']
     del globals()['tazNames']
+    #################OD using minidom for xml parsing: 1st version
