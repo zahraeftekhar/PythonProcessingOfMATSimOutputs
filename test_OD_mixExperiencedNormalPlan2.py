@@ -139,7 +139,7 @@ if __name__ == '__main__':
     del globals()['inputs']
     del globals()['tazNames']
 
-
+######## OD estimation using parallel processing and lxml instead of minidom
 
 
 
