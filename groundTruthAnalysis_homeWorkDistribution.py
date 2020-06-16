@@ -6,6 +6,8 @@ parser = etree.XMLParser(ns_clean=True, collect_ids=False)
 #                         "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans.xml").getroot().findall('person')
 itemlist= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
                                "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans.xml").getroot().findall('person')
+# itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
+#                                "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans.xml").getroot()
 itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
                                "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans.xml").getroot().findall('person')
 ######################################### deriving activity duration and traveling duration from plan files ###########################################
@@ -46,6 +48,7 @@ end_time_all = []
 # start_time_all_D = pd.DataFrame(start_time_all)
 # end_time_all_D = pd.DataFrame(end_time_all)
 ##########################################################################################################
+# testVar = itemlistExperienced.findall('person')
 same1stlastActivity = []
 for m in range(len(itemlistExperienced)) : #removing users that the fist activity type and the last one is not the same(only 10)
     if itemlistExperienced[m].findall('plan/activity')[0].get('type') !=itemlistExperienced[m].findall('plan/activity')[-1].get('type'):
@@ -55,20 +58,36 @@ homeDurations = []
 workDurations = []
 homeStarts = []
 workStarts = []
+otherDurations = []
+otherStarts = []
 indices = set(range(len(itemlistExperienced)))-set(same1stlastActivity)
-m=0
+m=8
 for m in indices:
-    end =to_seconds( itemlistExperienced[m].find('plan/activity').get('end_time'),strict=False)+24*3600#end of first activity in the next day
-    # start = to_seconds(itemlistExperienced[m].findall('plan/activity')[-1].get('start_time'), strict=False)
+    # end =to_seconds( itemlistExperienced[m].find('plan/activity').get('end_time'),strict=False)+24*3600#end of first activity in the next day
+    end = to_seconds(itemlistExperienced[m].find('plan/activity').get('end_time'),
+                     strict=False) + 24 * 3600  # end of first activity in the next day
+    # firstActivity = itemlistExperienced[m].find('plan/activity').get('type')
     firstActivity = itemlistExperienced[m].find('plan/activity').get('type')
+    # itemlistExperienced[m].xpath('plan/activity[attribute::type]')[0].attrib['type'] != 'home'
+    otherIndices = []
+    for n in range(len(itemlistExperienced[m].xpath('plan/activity'))):
+        if itemlistExperienced[m].xpath('plan/activity[attribute::type]')[n].attrib['type'] != 'home'\
+                and itemlistExperienced[m].xpath('plan/activity[attribute::type]')[n].attrib['type'] != 'work':
+            otherIndices+=[int(n)]
+
     if firstActivity == 'home':
         home = itemlistExperienced[m].findall('plan/activity[@type="home"]')[1:]
-    else:
-        home = itemlistExperienced[m].findall('plan/activity[@type="home"]')
-    if firstActivity == 'work':
-        work = itemlistExperienced[m].findall('plan/activity[@type="work"]')[1:]
-    else:
         work = itemlistExperienced[m].findall('plan/activity[@type="work"]')
+        other = [itemlistExperienced[m].findall('plan/activity')[q] for q in otherIndices]
+    elif firstActivity == 'work':
+        home = itemlistExperienced[m].findall('plan/activity[@type="home"]')
+        work = itemlistExperienced[m].findall('plan/activity[@type="work"]')[1:]
+        other = [itemlistExperienced[m].findall('plan/activity')[q] for q in otherIndices]
+    else:
+        print(itemlistExperienced[m].get('id'),[m])
+        home = itemlistExperienced[m].findall('plan/activity[@type="home"]')
+        work = itemlistExperienced[m].findall('plan/activity[@type="work"]')
+        other = [itemlistExperienced[m].findall('plan/activity')[q] for q in otherIndices[1:]]
     # homeDurations += [to_seconds(home[0].get('end_time'), strict= False).__int__()-
     #                   to_seconds('02:00:00').__int__()] #todo please enter simulation begining time for the fist activity duration
     # workDuration += [to_seconds(work[0].get('end_time'), strict= False).__int__()-
@@ -89,6 +108,13 @@ for m in indices:
             'end_time') is None else work[k].get('end_time')), strict=False).__int__() - \
                          to_seconds(work[k].get('start_time'), strict=False).__int__()]
         k += 1
+    l = 0
+    while l < len(other):
+        otherStarts += [to_seconds(other[l].get('start_time'), strict=False).__int__()]
+        otherDurations += [to_seconds((end if other[l].get(
+            'end_time') is None else other[l].get('end_time')), strict=False).__int__() - \
+                          to_seconds(other[l].get('start_time'), strict=False).__int__()]
+        l += 1
 
     # __________________________________________________________________________________________
     homeloc += [Point(float(itemlist[m].find('plan/activity[@type="home"]').get('x')),
@@ -98,15 +124,18 @@ for m in indices:
 
 print(time.time() - start_time)
 homeDurations = pd.DataFrame(homeDurations, columns=['duration(sec)'])
-workDuration = pd.DataFrame(workDurations, columns=['duration(sec)'])
+workDurations = pd.DataFrame(workDurations, columns=['duration(sec)'])
+otherDurations = pd.DataFrame(otherDurations, columns=['duration(sec)'])
 workStarts = pd.DataFrame(workStarts, columns=['start_time(sec)'])
 homeStarts = pd.DataFrame(homeStarts, columns=['start_time(sec)'])
+otherStarts = pd.DataFrame(otherStarts, columns=['start_time(sec)'])
 homeloc = pd.DataFrame(homeloc, columns=['lon-lat'])
 workloc = pd.DataFrame(workloc, columns=['lon-lat'])
 nTotalActivity = len(etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
                                "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans.xml").getroot().findall('person/plan/activity'))-deducted_usersNum
 nHomeActivity = len(homeDurations)
-nWorkActivity = len(workDuration)
+nWorkActivity = len(workDurations)
+nOtherActivity = len(otherDurations)
 # fontDictAxis = {'family':'serif',
 #                 'style':'normal',
 #                 'size':'10',
