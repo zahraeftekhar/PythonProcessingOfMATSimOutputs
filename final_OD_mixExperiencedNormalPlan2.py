@@ -66,7 +66,7 @@ ODMatrix_df = pd.DataFrame(np.zeros((odsize, odsize), dtype=np.int32), columns=m
 person = itemlistPlan[0]
 m=1
 start_time = time.time()
-for m, person in enumerate(itemlistPlan): #1.8789 seconds for 1000 itemlist
+for m, person in enumerate(itemlistPlan):
     activityListPlan = itemlistPlan[m].findall('plan/activity')
     activityListExperienced = itemlistExperienced[m].findall('plan/activity')
     if m==2:
@@ -132,7 +132,7 @@ for m, person in enumerate(itemlistPlan): #1.8789 seconds for 1000 itemlist
             # continue
 
         j += 1
-    print(m/len(itemlistPlan))
+    # print(m/len(itemlistPlan), '______',(time.time() - start_time))
     # print(np.sum(np.sum(ODMatrix_df, axis=0)))
 print(np.sum(np.sum(ODMatrix_df, axis=0)))
 print(time.time() - start_time)
@@ -141,4 +141,4 @@ TXTFileName = "D:/ax/OD({start1}-{start2}_{end1}-{end2}).CSV".format(start1 = OD
 ODMatrix_df.to_csv(TXTFileName, index=True, header=True)
 ################ FINAL decision: this code fraction works for OD estimation from ground truth .XML data
 
-################ Elapsed time: 5552.5 seconds
+################ Elapsed time: 4042 seconds (with print in every loop)
