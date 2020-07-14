@@ -54,10 +54,12 @@ parser = etree.XMLParser(ns_clean=True, collect_ids=False)
 # parser = etree.XMLPullParser(tag = "person")
 # context = etree.iterparse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
 #                         "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans.xml", tag= 'person')
+trueLocations = pd.read_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
+                               "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.trueLocExperienced.csv")
 itemlistPlan = etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-                        "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans.xml").getroot().findall('person')
+                        "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans_Nogeneric(all allowed).xml").getroot().findall('person')
 itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-                               "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans.xml").getroot().findall('person')
+                               "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans_Nogeneric(all allowed).xml").getroot().findall('person')
 ######################################### deriving OD matrix from plan files ###########################################
 import numpy as np
 import pandas as pd
@@ -65,12 +67,17 @@ ODMatrix_df = pd.DataFrame(np.zeros((odsize, odsize), dtype=np.int32), columns=m
                            index=matrixRowColNames)  # creating empty OD matrix
 person = itemlistPlan[0]
 m=1
+mmm=1
 start_time = time.time()
 for m, person in enumerate(itemlistPlan):
+    if m == mmm * 1000:
+        print('{percentage} percent____{duration} sec'.format(percentage=m / len(itemlistPlan),
+                                                              duration=time.time() - start_time))
+        mmm += 1
     activityListPlan = itemlistPlan[m].findall('plan/activity')
     activityListExperienced = itemlistExperienced[m].findall('plan/activity')
-    if m==2:
-        np.sum(np.sum(ODMatrix_df,axis=0), axis=0)
+    # if m==2:
+    #     np.sum(np.sum(ODMatrix_df,axis=0), axis=0)
     j=1
     while j < len(activityListPlan):
         if j==len(activityListPlan)-1:
@@ -133,7 +140,7 @@ for m, person in enumerate(itemlistPlan):
 
         j += 1
     # print(m/len(itemlistPlan), '______',(time.time() - start_time))
-    # print(np.sum(np.sum(ODMatrix_df, axis=0)))
+    # print(np.sum(np.sum(ODMatrix_df, axis=0))) #13353 in the last run
 print(np.sum(np.sum(ODMatrix_df, axis=0)))
 print(time.time() - start_time)
 TXTFileName = "D:/ax/OD({start1}-{start2}_{end1}-{end2}).CSV".format(start1 = ODstart[0:2],start2 = ODstart[3:5],
@@ -141,4 +148,4 @@ TXTFileName = "D:/ax/OD({start1}-{start2}_{end1}-{end2}).CSV".format(start1 = OD
 ODMatrix_df.to_csv(TXTFileName, index=True, header=True)
 ################ FINAL decision: this code fraction works for OD estimation from ground truth .XML data
 
-################ Elapsed time: 4042 seconds (with print in every loop)
+################ Elapsed time: 3200 seconds
