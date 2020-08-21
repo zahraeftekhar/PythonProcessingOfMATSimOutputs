@@ -27,20 +27,16 @@ class TAZmap:
 
 ######################################### geo-spacial related packages #################################################
 import pandas as pd
-# from shapely.geometry import shape, mapping, Point, Polygon, MultiPolygon
 import time
 # building the zero OD Matrix based on the number of zones in the SHP
 map_mzr = TAZmap()
-# map_mzr.set_map('C:/Users/zahraeftekhar/PycharmProjects/XMLparsing1/netherlandsSHP/mezuro_areas_2018.shp')
 map_mzr.set_map('D:/ax/gis/locationMappingToMezuroZones/amsterdamMezuroZones.shp')
 inputs = map_mzr.map.geometry
 # tazNames = map_mzr.map.iloc[:].mzr_id
 amsterdamMezuroZones = pd.read_csv('D:/ax/gis/locationMappingToMezuroZones/amsterdamMezuroZones.CSV', usecols=['mzr_id'])
-tazNames = amsterdamMezuroZones['mzr_id'] #5333 is also included but not in amsterdam so '0' zone represent it
-  #5333 is also included but not in amsterdam so '0' zone represent it
+tazNames = amsterdamMezuroZones['mzr_id']
 zoneZero = pd.Series(0)
 matrixRowColNames = tuple(zoneZero.append(tazNames))
-# odsize = map_mzr.map.__len__() + 1
 odsize=len(matrixRowColNames)
 del map_mzr
 ODstart = "06:30:00"
@@ -51,39 +47,35 @@ endTime_OD = pd.to_timedelta(ODend)
 from xml.dom import minidom
 from lxml import etree
 parser = etree.XMLParser(ns_clean=True, collect_ids=False)
-# parser = etree.XMLPullParser(tag = "person")
-# context = etree.iterparse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-#                         "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans.xml", tag= 'person')
 trueLocations = pd.read_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-                               "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.trueLocExperienced.csv")
-itemlistPlan = etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-                        "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans_Nogeneric(all allowed).xml").getroot().findall('person')
-itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-                               "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans_Nogeneric(all allowed).xml").getroot().findall('person')
+                               "/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.trueLocExperienced.csv")
+itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim_directory/matsim-example-project/scenarios/" \
+              "example_zahra/Amsterdam/original files/PlanWithOnlyCar_again_NoGeneric.xml").getroot().findall('person')
 ######################################### deriving OD matrix from plan files ###########################################
 import numpy as np
 import pandas as pd
 ODMatrix_df = pd.DataFrame(np.zeros((odsize, odsize), dtype=np.int32), columns=matrixRowColNames,
                            index=matrixRowColNames)  # creating empty OD matrix
-person = itemlistPlan[0]
-m=1
+person = itemlistExperienced[0]
+m=0
 mmm=1
 start_time = time.time()
-for m, person in enumerate(itemlistPlan):
+for m, person in enumerate(itemlistExperienced):
     if m == mmm * 1000:
-        print('{percentage} percent____{duration} sec'.format(percentage=m / len(itemlistPlan),
+        print('{percentage} percent____{duration} sec'.format(percentage=m / len(itemlistExperienced),
                                                               duration=time.time() - start_time))
         mmm += 1
-    activityListPlan = itemlistPlan[m].findall('plan/activity')
+    activityListPlan = itemlistExperienced[m].findall('plan/activity')
     activityListExperienced = itemlistExperienced[m].findall('plan/activity')
+    truelocs = trueLocations[trueLocations['VEHICLE']==int(itemlistExperienced[m].get('id'))]
+    truelocs = truelocs.reset_index(drop=True)
     # if m==2:
     #     np.sum(np.sum(ODMatrix_df,axis=0), axis=0)
     j=1
     while j < len(activityListPlan):
         if j==len(activityListPlan)-1:
             start_time1 = pd.to_timedelta(activityListExperienced[j].get('start_time'))
-            # if j.__eq__(0):
-            #     start_time1 = '03:00:00' #____________________PLEASE ENTER THE BEGINING TIME OF THE SIMULATION _____________________
+            #____________________PLEASE ENTER THE BEGINING TIME OF THE SIMULATION _____________________
             end_time1 = pd.to_timedelta(activityListExperienced[0].get('end_time'))+ pd.to_timedelta('24:00:00')
             from duration import to_seconds
             from _datetime import datetime
@@ -112,19 +104,19 @@ for m, person in enumerate(itemlistPlan):
             else:
                 while endTime_OD > endActivity:
                     point1 = LongLat()
-                    point1.set_location(x=float(activityListPlan[j].get('x')),
-                                        y=float(activityListPlan[j].get('y')))
+                    point1.set_location(x=float(truelocs.loc[j-1,'x']),
+                                        y=float(truelocs.loc[j-1,'y'])) #point1.set_location(x=float(activityListPlan[j].get('x')), y=float(activityListPlan[j].get('y')))
                     point1.changeCoordSys()
                     for k in range(len(tazNames)):
                         point1.zoneMapping(inputs[k], tazNames[k])
                     origin = point1.TAZ
                     point2 = LongLat()
                     if j == len(activityListPlan) - 1:
-                        point2.set_location(x=float(activityListPlan[1].get('x')),
-                                            y=float(activityListPlan[1].get('y')))
+                        point2.set_location(x=float(truelocs.loc[0,'x']),
+                                            y=float(truelocs.loc[0,'y'])) #point2.set_location(x=float(activityListPlan[1].get('x')),y=float(activityListPlan[1].get('y')))
                     else:
-                        point2.set_location(x=float(activityListPlan[j + 1].get('x')),
-                                        y=float(activityListPlan[j + 1].get('y')))
+                        point2.set_location(x=float(truelocs.loc[j,'x']),
+                                        y=float(truelocs.loc[j,'y']))
                     point2.changeCoordSys()
                     for k in range(len(tazNames)):
                         point2.zoneMapping(inputs[k], tazNames[k])
