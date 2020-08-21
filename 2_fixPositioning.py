@@ -8,10 +8,10 @@ from statistics import mean
 from lxml import etree
 start_time = time.time()
 parser = etree.XMLParser(ns_clean=True, collect_ids=False)
-itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-                               "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans_Nogeneric(all allowed).xml").getroot().findall('person')
-links = etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_PlanWithOnlyCar_30secSnapShot/output_network.xml").getroot().findall('links/link')
-nodes = etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_PlanWithOnlyCar_30secSnapShot/output_network.xml").getroot().findall('nodes/node')
+itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim_directory/matsim-example-project/scenarios/" \
+              "example_zahra/Amsterdam/original files/PlanWithOnlyCar_again_NoGeneric.xml").getroot().findall('person')
+links = etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/output_network.xml").getroot().findall('links/link')
+nodes = etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/output_network.xml").getroot().findall('nodes/node')
 trueLocations = pd.DataFrame(columns=['VEHICLE','activityType','x','y'])
 m=0
 person = itemlistExperienced[m]
@@ -38,5 +38,5 @@ for m, person in enumerate(itemlistExperienced):
                         trueloc.loc[0,'y'] = nodes[k].get('y')
         trueLocations = trueLocations.append(trueloc)
 trueLocations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-                               "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.trueLocExperienced.csv", header=True, index=False)
+                               "/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.trueLocExperienced.csv", header=True, index=False)
 #  43 min run time
