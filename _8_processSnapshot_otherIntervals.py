@@ -9,14 +9,15 @@ import random
 # ____________________________________ choosing records based on interval & clustering records ________________________________________
 files = range(0,10) ###### fixme warning: 0 is not in range because we have it but generally it should be
 # interval = 60#todo: please enter the interval between snapData records
-intervals = [30,60,300,600,900,1200,1500,1800,2100,2400,2700,3600]
+intervals = [60,300,600,900,1200,1500,1800,2100,2400,2700,3000,3300,3600]
 startTime = time.time()
 q=0
 # __________________________ generating snapshot for the specified interval _________________________________________________
 for interval in intervals:
     print("************** interval is {inin} sec ***************".format(inin=interval))
     for q in files: # 18.6min for each file60,13.53min 300,20min 600, 20min900,16.25min for1800
-        snapDataSplit = pd.read_csv("D:/ax/gis/completePLUdata_30sec/completePLUdata_30sec_{number}.csv".format(number = q)) #38.5 sec to load 4G data
+        # snapDataSplit = pd.read_csv("D:/ax/gis/completePLUdata_30sec/completePLUdata_30sec_{number}.csv".format(number = q)) #38.5 sec to load 4G data
+        snapDataSplit = pd.read_csv("/data/zahraeftekhar/research_temporal/completePLUdata_30sec/completePLUdata_30sec_{number}.csv".format(number = q)) #38.5 sec to load 4G data
         snapDataSplit[['mzr_id', 'VEHICLE']] = snapDataSplit[['mzr_id', 'VEHICLE']].astype(int)
         snapDataSplit = snapDataSplit.sort_values(by=["VEHICLE","TIME"])
         vehicleIDs = snapDataSplit.VEHICLE.unique()
@@ -38,7 +39,8 @@ for interval in intervals:
         snapDataSplit = snapDataSplit_intervalFixed
         del snapDataSplit_intervalFixed
         # snapDataSplit = snapDataSplit.reset_index(drop=True)
-        folderSave = "D:/ax/gis/completePLUdata_{inter}sec".format(inter=interval)
+        # folderSave = "D:/ax/gis/completePLUdata_{inter}sec".format(inter=interval)
+        folderSave = "/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec".format(inter=interval)
         path = 'path_to_my_folder'
         if not os.path.exists(folderSave):
             os.makedirs(folderSave)
@@ -53,8 +55,8 @@ for interval in intervals:
     startTime = time.time()
     # q=0
     for q in files: #11 min for each file60...2.5min for interval300,1.4min for600, 1min for900, 0.5min1800
-        snapDataSplit=pd.read_csv("D:/ax/gis/completePLUdata_{inter}sec/completePLUdata_{inter}sec_{number}.csv".format(number=q, inter=interval))
-        # snapDataSplit = pd.read_csv("D:/ax/gis/completePLUdata_60sec/completePLUdata_60sec_{number}.csv".format(number = q)) #38.5 sec to load 4G data
+        # snapDataSplit=pd.read_csv("D:/ax/gis/completePLUdata_{inter}sec/completePLUdata_{inter}sec_{number}.csv".format(number=q, inter=interval))
+        snapDataSplit=pd.read_csv("/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/completePLUdata_{inter}sec_{number}.csv".format(number=q, inter=interval))
         snapDataSplit[['mzr_id', 'VEHICLE']] = snapDataSplit[['mzr_id', 'VEHICLE']].astype(int)
         snapDataSplit = snapDataSplit.sort_values(by=["VEHICLE","TIME"])
         vehicleIDs = snapDataSplit.VEHICLE.unique()
@@ -95,7 +97,8 @@ for interval in intervals:
                 newD.iloc[l,0:-1]=testRecords.iloc[clusIndex[l],:]
             clusterData = clusterData.append(newD)
         print((int((time.time() - startTime)/60)), end=' min ____ end for file number {number}\n'.format(number=q))
-        folderSave = "D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec".format(inter=interval)
+        # folderSave = "D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec".format(inter=interval)
+        folderSave = "/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec".format(inter=interval)
         if not os.path.exists(folderSave):
             os.makedirs(folderSave)
         filename = 'clusterPLU_{inter}sec_{number}.CSV'.format(number=q, inter=interval)
@@ -103,9 +106,11 @@ for interval in intervals:
         clusterData.to_csv(filePathSave, index=False, header=True)
      #****** _________________ modifying users in the boundry of files (splited records) _________________
     for s in range(0,9):
-        cluster0 = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s,inter=interval))
+        # cluster0 = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s,inter=interval))
+        cluster0 = pd.read_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s,inter=interval))
         bound0 = cluster0.loc[len(cluster0)-1, :]
-        cluster1 = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s+1,inter=interval))
+        # cluster1 = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s+1,inter=interval))
+        cluster1 = pd.read_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s+1,inter=interval))
         bound1 = cluster1.loc[0, :]
         rec0 = cluster0[cluster0.VEHICLE == bound0.VEHICLE]
         rec0 = rec0.reset_index(drop=True)
@@ -118,8 +123,13 @@ for interval in intervals:
         else:
             cluster0 = cluster0.append(rec1, ignore_index=True)
             cluster1 = cluster1.loc[len(rec1):, :]
-        cluster0.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s,inter=interval), header=True,index=False)
-        cluster1.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s+1,inter=interval), header=True,index=False)
+        # cluster0.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s,inter=interval), header=True,index=False)
+        cluster0.to_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s,inter=interval), header=True,index=False)
+        # cluster1.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s+1,inter=interval), header=True,index=False)
+        cluster1.to_csv(
+            '/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number=s + 1,
+                                                                                                                   inter=interval),
+            header=True, index=False)
 # # # _____________________________________________________________________________________________________________________
 #__________________________________ location type identification _____________________________________________________
 startTime = time.time()
@@ -131,20 +141,37 @@ for interval in intervals:
     for seed in seeds:
         print("************** seed is {inin} sec ***************".format(inin=seed))
         # ________________________ reading data: Trainset _________________________
+        # train_tripData = pd.read_csv(
+        #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_tripStarts_seed{ss}.csv".format(
+        #         ss=seed))
+        # train_activityData = pd.read_csv(
+        #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_activityStarts_seed{ss}.csv".format(
+        #         ss=seed))
+        # train_homeData = pd.read_csv(
+        #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_homeStarts_seed{ss}.CSV".format(
+        #         ss=seed))
+        # train_workData = pd.read_csv(
+        #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_workStarts_seed{ss}.CSV".format(
+        #         ss=seed))
+        # train_otherData = pd.read_csv(
+        #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_otherStarts_seed{ss}.CSV".format(
+        #         ss=seed))
+
+
         train_tripData = pd.read_csv(
-            "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_tripStarts_seed{ss}.csv".format(
+            "/data/zahraeftekhar/research_temporal/GTanalysis/train_tripStarts_seed{ss}.csv".format(
                 ss=seed))
         train_activityData = pd.read_csv(
-            "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_activityStarts_seed{ss}.csv".format(
+            "/data/zahraeftekhar/research_temporal/GTanalysis/train_activityStarts_seed{ss}.csv".format(
                 ss=seed))
         train_homeData = pd.read_csv(
-            "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_homeStarts_seed{ss}.CSV".format(
+            "/data/zahraeftekhar/research_temporal/GTanalysis/train_homeStarts_seed{ss}.CSV".format(
                 ss=seed))
         train_workData = pd.read_csv(
-            "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_workStarts_seed{ss}.CSV".format(
+            "/data/zahraeftekhar/research_temporal/GTanalysis/train_workStarts_seed{ss}.CSV".format(
                 ss=seed))
         train_otherData = pd.read_csv(
-            "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_otherStarts_seed{ss}.CSV".format(
+            "/data/zahraeftekhar/research_temporal/GTanalysis/train_otherStarts_seed{ss}.CSV".format(
                 ss=seed))
         # train_activityData = pd.read_csv('D:/ax/gis/completePLUdata_30sec/clusterPLU_30sec/train_activityData_0.01ratio.CSV')
         # train_tripData = pd.read_csv('D:/ax/gis/completePLUdata_30sec/clusterPLU_30sec/train_tripData_0.01ratio.CSV')
@@ -167,7 +194,8 @@ for interval in intervals:
         # bw2 = 0.5
         # r=8
         for r in files: #4 min for each file60,2min for300, 1.8minfor600,1.7min for900,1min for1800
-            clusterData = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number = r, inter=interval))
+            # clusterData = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number = r, inter=interval))
+            clusterData = pd.read_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/clusterPLU_{inter}sec_{number}.CSV'.format(number = r, inter=interval))
             clusterData['location type'] = None
             clusterData['activity type'] = None
             clusterData['stay'] = np.log(prior_activity)+np.log( gaussian_kde(train_activityData['Duration(hour)']).pdf((clusterData['duration(sec)'].astype(int))/3600))+np.log( gaussian_kde(train_activityData['start(hour)']).pdf((clusterData['TIME'].astype(int))/3600))
@@ -238,8 +266,10 @@ for interval in intervals:
             anchorLocs['activity'] = (anchorLocs[['home','work', 'other']]).astype(int).idxmax(axis=1)
             anchorLocs = anchorLocs.drop(columns = ['home','work', 'other'], axis = 1)
             print((int((time.time() - startTime) / 60)), end=' min ____ end for file number {number}\n'.format(number=r))
-            anchorLocs.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}_{number}.CSV'.format(number=r, inter=interval,ss=seed), header=True,index=False)
-            folderSave = "D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/identifiedClusters".format(inter=interval)
+            # anchorLocs.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}_{number}.CSV'.format(number=r, inter=interval,ss=seed), header=True,index=False)
+            anchorLocs.to_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}_{number}.CSV'.format(number=r, inter=interval,ss=seed), header=True,index=False)
+            # folderSave = "D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/identifiedClusters".format(inter=interval)
+            folderSave = "/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/identifiedClusters".format(inter=interval)
             if not os.path.exists(folderSave):
                 os.makedirs(folderSave)
             filename = 'identified_clusterPLU_{inter}sec_seed{ss}_{number}.CSV'.format(number = r, inter=interval,ss=seed)
@@ -256,7 +286,8 @@ for interval in intervals:
         print("************** interval:{inter}, seed is {inin} and time is {tt} min***************".format(inin=seed,inter=interval,tt=round((time.time()-startTime)/60)))
         anchorLocs = pd.DataFrame()
         for t in range(0,10):
-            anchor = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}_{number}.CSV'.format(number=t, inter=interval,ss=seed))
+            # anchor = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}_{number}.CSV'.format(number=t, inter=interval,ss=seed))
+            anchor = pd.read_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}_{number}.CSV'.format(number=t, inter=interval,ss=seed))
             anchorLocs= anchorLocs.append(anchor,ignore_index=True)
         vehicleIDs = anchorLocs['VEHICLE'].unique()
         for i in range(len(vehicleIDs)): #range(len(vehicleIDs))
@@ -269,7 +300,8 @@ for interval in intervals:
                 for j in temp.index.drop(temp.index[temp['activity'] == 'home']):
                     if ((float(anchorLocs.loc[j,'EASTING'])-float(homeEASTING))**2+ (float(anchorLocs.loc[j,'NORTHING'])-float(homeNORTHING))**2)**0.5<300:
                         anchorLocs.loc[j,'activity'] = 'home'
-        anchorLocs.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}.CSV'.format( inter=interval,ss=seed),header=True,index=False)
+        # anchorLocs.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}.CSV'.format( inter=interval,ss=seed),header=True,index=False)
+        anchorLocs.to_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}.CSV'.format( inter=interval,ss=seed),header=True,index=False)
 
 # #
 # #
@@ -282,19 +314,21 @@ for interval in intervals:
         print("************** seed is {inin} sec ***************".format(inin=seed))
         anchorLocs = pd.DataFrame() #NOT NEEDED for interval less than 5min
         speed  = 50*1000/3600 #35:(0.43,0.53),33:(0.45,),30:(0.473,0.494),28:(0.485,0.485)
-        anchorLocs = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}.CSV'.format( inter=interval,ss=seed))
+        # anchorLocs = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}.CSV'.format( inter=interval,ss=seed))
+        anchorLocs = pd.read_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocsPLU_{inter}sec_seed{ss}.CSV'.format( inter=interval,ss=seed))
         anchorLocs = anchorLocs.sort_values('VEHICLE')
-        GTtimeData=pd.read_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.trueTimes.csv")
-        GTtimeData.VEHICLE = (GTtimeData.VEHICLE).astype(int)
-        GTtimeData = GTtimeData.sort_values('VEHICLE')
-        GTids = np.sort((GTtimeData['VEHICLE'].unique()).astype(int))
+        # # GTtimeData=pd.read_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.trueTimes.csv")
+        # GTtimeData=pd.read_csv("/data/zahraeftekhar/research_temporal/1.trueTimes.csv")#???????????????????? todo: what is TrueTimes
+        # GTtimeData.VEHICLE = (GTtimeData.VEHICLE).astype(int)
+        # GTtimeData = GTtimeData.sort_values('VEHICLE')
+        # GTids = np.sort((GTtimeData['VEHICLE'].unique()).astype(int))
         anchorLocs_fixedStart = pd.DataFrame()
-        anchorLocsNogeneric = pd.DataFrame()
-        for i in range(len(GTids)):
-            anchorLocsNogeneric = anchorLocsNogeneric.append(anchorLocs[anchorLocs['VEHICLE']==GTids[i]])
+        # for i in range(len(GTids)):
+        #     anchorLocsNogeneric = anchorLocsNogeneric.append(anchorLocs[anchorLocs['VEHICLE']==GTids[i]])
         vehicleIDs = anchorLocs['VEHICLE'].unique()
+        anchorLocsNogeneric = anchorLocs
         del anchorLocs
-        vehicleIDs=GTids
+        # vehicleIDs=GTids
         # i= 14623 #14619
         startTime = time.time()
         # mmm=1
@@ -342,7 +376,10 @@ for interval in intervals:
                 # print(pd.to_timedelta(testRecords2.loc[:, 'start(sec)'], unit='s'))
 
         anchorLocs_fixedStart = anchorLocs_fixedStart.reset_index(drop=True)
-        anchorLocs_fixedStart.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocs_fixedStart_{inter}sec_seed{ss}.CSV'.format(ss=seed,inter=interval),header=True,index=False)
+        # anchorLocs_fixedStart.to_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocs_fixedStart_{inter}sec_seed{ss}.CSV'.format(ss=seed,inter=interval),header=True,index=False)
+        anchorLocs_fixedStart.to_csv(
+            '/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocs_fixedStart_{inter}sec_seed{ss}.CSV'.format(
+                ss=seed, inter=interval), header=True, index=False)
 # # print(len(anchorLocs_fixedStart[anchorLocs_fixedStart['start(sec)']==anchorLocsNogeneric['start(sec)']])/len(anchorLocs_fixedStart))
 # # print(len(anchorLocs_fixedStart[anchorLocs_fixedStart['start(sec)']-anchorLocsNogeneric['start(sec)']==interval])/len(anchorLocs_fixedStart))
 # # anchorLocs_fixedStart['end(sec)'] = anchorLocs['start(sec)']+anchorLocs['duration(sec)']
@@ -371,37 +408,36 @@ for interval in intervals:
 # # GTtimeData['durationFixed2'] = pd.to_timedelta(GTtimeData['durationFixed'],unit='s')
 # # GTtimeData = GTtimeData.drop(columns=['startPLU', 'durationPLU','startFixed', 'durationFixed'])
 # # test = GTtimeData[['VEHICLE','start','startPLU2','startFixed2']]
-# # # # ___________________________GT Times _____________________________________________
-# # # from lxml import etree
-# # # start_time=time.time()
-# # # itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-# # #                                "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.experienced_plans_Nogeneric(all allowed).xml").getroot().findall('person')
-# # # GTtimeData = pd.DataFrame(columns=['VEHICLE','start','duration','type'])
-# # # mmm = 1
-# # # for m, person in enumerate(itemlistExperienced):
-# # #     if m == mmm * 100:
-# # #         print('{percentage} percent____{duration} sec'.format(percentage=m / len(itemlistExperienced) * 100,
-# # #                                                               duration=time.time() - start_time))
-# # #         mmm += 1
-# # #     # legList = itemlistExperienced[m].findall('plan/leg/route')
-# # #     activityList = itemlistExperienced[m].findall('plan/activity')
-# # #     i = 0
-# # #     for i in range(1,len(activityList)-1):
-# # #         trueloc = pd.DataFrame(columns=['VEHICLE','start','end','type'])
-# # #         trueloc.loc[i-1, 'VEHICLE'] = person.get('id')
-# # #         trueloc.loc[i - 1, 'start'] = activityList[i].get('start_time')
-# # #         trueloc.loc[i - 1, 'end'] = activityList[i].get('end_time')
-# # #         trueloc.loc[i - 1, 'type'] = activityList[i].get('type')
-# # #     i+=1
-# # #     trueloc.loc[i - 1, 'VEHICLE'] = person.get('id')
-# # #     trueloc.loc[i - 1, 'start'] = activityList[i].get('start_time')
-# # #     trueloc.loc[i - 1, 'end'] = pd.to_timedelta(activityList[0].get('end_time'))+pd.to_timedelta('24:00:00')
-# # #     trueloc.loc[i - 1, 'type'] = activityList[i].get('type')
-# # #     GTtimeData = GTtimeData.append(trueloc)
-# # # GTtimeData.duration = pd.to_timedelta(GTtimeData.end)-pd.to_timedelta(GTtimeData.start)
-# # # GTtimeData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
-# # #                                "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.trueTimes.csv", header=True, index=False)
-# # # __________________________________________________________________________________
+# # ___________________________GT Times _____________________________________________
+# import xml.etree.ElementTree as etree
+# start_time=time.time()
+# itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot_final/ITERS/it.1/PlanWithOnlyCar_again_NoGeneric_NoZeroDuationActivity.xml").getroot().findall('person')
+# GTtimeData = pd.DataFrame(columns=['VEHICLE','start','duration','type'])
+# mmm = 1
+# for m, person in enumerate(itemlistExperienced):
+#     if m == mmm * 100:
+#         print('{percentage} percent____{duration} sec'.format(percentage=m / len(itemlistExperienced) * 100,
+#                                                               duration=time.time() - start_time))
+#         mmm += 1
+#     # legList = itemlistExperienced[m].findall('plan/leg/route')
+#     activityList = itemlistExperienced[m].findall('plan/activity')
+#     i = 0
+#     for i in range(1,len(activityList)-1):
+#         trueloc = pd.DataFrame(columns=['VEHICLE','start','end','type'])
+#         trueloc.loc[i-1, 'VEHICLE'] = person.get('id')
+#         trueloc.loc[i - 1, 'start'] = activityList[i].get('start_time')
+#         trueloc.loc[i - 1, 'end'] = activityList[i].get('end_time')
+#         trueloc.loc[i - 1, 'type'] = activityList[i].get('type')
+#     i+=1
+#     trueloc.loc[i - 1, 'VEHICLE'] = person.get('id')
+#     trueloc.loc[i - 1, 'start'] = activityList[i].get('start_time')
+#     trueloc.loc[i - 1, 'end'] = pd.to_timedelta(activityList[0].get('end_time'))+pd.to_timedelta('24:00:00')
+#     trueloc.loc[i - 1, 'type'] = activityList[i].get('type')
+#     GTtimeData = GTtimeData.append(trueloc)
+# GTtimeData.duration = pd.to_timedelta(GTtimeData.end)-pd.to_timedelta(GTtimeData.start)
+# GTtimeData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
+#                                "/Results_PlanWithOnlyCar_30secSnapShot_final/ITERS/it.1/1.trueTimes.csv", header=True, index=False)
+# # __________________________________________________________________________________
 # #
 # #
 # __________ estimation OD matrix ___________  todo: put Amsterdam zoning map with data point on it in the report
@@ -410,11 +446,14 @@ for interval in intervals:
     print("************** interval is {inin} sec ***************".format(inin=interval))
     seeds = range(101, 126)
     for seed in seeds:
-        anchorLocs = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocs_fixedStart_{inter}sec_seed{ss}.CSV'.format(ss=seed,inter=interval), usecols=['VEHICLE', 'mzr_id', 'EASTING', 'NORTHING', 'start(sec)',
+        # anchorLocs = pd.read_csv('D:/ax/gis/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocs_fixedStart_{inter}sec_seed{ss}.CSV'.format(ss=seed,inter=interval), usecols=['VEHICLE', 'mzr_id', 'EASTING', 'NORTHING', 'start(sec)',
+        #        'duration(sec)','activity'])
+        anchorLocs = pd.read_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/clusterPLU_{inter}sec/anchorLocs_fixedStart_{inter}sec_seed{ss}.CSV'.format(ss=seed,inter=interval), usecols=['VEHICLE', 'mzr_id', 'EASTING', 'NORTHING', 'start(sec)',
                'duration(sec)','activity'])
         print(min(anchorLocs['duration(sec)']))
         anchorLocs['end(sec)'] = anchorLocs['start(sec)']+anchorLocs['duration(sec)']
-        amsterdamMezuroZones = pd.read_csv('D:/ax/gis/locationMappingToMezuroZones/amsterdamMezuroZones.CSV', usecols=['mzr_id'])
+        # amsterdamMezuroZones = pd.read_csv('D:/ax/gis/locationMappingToMezuroZones/amsterdamMezuroZones.CSV', usecols=['mzr_id'])
+        amsterdamMezuroZones = pd.read_csv('/data/zahraeftekhar/research_temporal/locationMappingToMezuroZones/amsterdamMezuroZones.CSV', usecols=['mzr_id'])
         tazNames = amsterdamMezuroZones['mzr_id'] #5333 is also included but not in amsterdam so '0' zone represent it
         zoneZero = pd.Series(0)
         matrixRowColNames = tuple(zoneZero.append(tazNames))
@@ -447,8 +486,6 @@ for interval in intervals:
                 if j==len(activityList)-1:
                     start_time1 = pd.to_timedelta(activityList.loc[j,'start(sec)'], unit='sec')
                     end_time1 = pd.to_timedelta(activityList.loc[j,'end(sec)'], unit='sec')
-                    from duration import to_seconds
-                    from _datetime import datetime
                     start_time2 = pd.to_timedelta(activityList.loc[0,'start(sec)'], unit='sec')+ pd.to_timedelta('24:00:00')
                     endActivity = end_time1
                     startNewActivity = start_time2
@@ -501,16 +538,20 @@ for interval in intervals:
             # print(activityList.loc[0,'VEHICLE'], end='____')
         print(seed)
         print(np.sum(np.sum(ODMatrix_df, axis=0))) #13264 for 30sec interval
-        ODMatrix_df.to_csv('D:/ax/gis/completePLUdata_{inter}sec/OD({a}-{b}_{c}-{d})_seed{ss}.CSV'.
+        # ODMatrix_df.to_csv('D:/ax/gis/completePLUdata_{inter}sec/OD({a}-{b}_{c}-{d})_seed{ss}.CSV'.
+        #                    format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5],ss=seed),header=True, index=True)
+        ODMatrix_df.to_csv('/data/zahraeftekhar/research_temporal/completePLUdata_{inter}sec/OD({a}-{b}_{c}-{d})_seed{ss}.CSV'.
                            format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5],ss=seed),header=True, index=True)
-        ODMatrix_home.to_csv('D:/ax/gis/completePLUdata_{inter}sec/OD({a}-{b}_{c}-{d})_home_seed{ss}.CSV'.
-                           format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5],ss=seed),header=True, index=True)
-        ODMatrix_work.to_csv('D:/ax/gis/completePLUdata_{inter}sec/OD({a}-{b}_{c}-{d})_work_seed{ss}.CSV'.
-                           format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5],ss=seed),header=True, index=True)
-        ODMatrix_other.to_csv('D:/ax/gis/completePLUdata_{inter}sec/OD({a}-{b}_{c}-{d})_other_seed{ss}.CSV'.
-                           format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5],ss=seed),header=True, index=True)
+        # ODMatrix_home.to_csv('D:/ax/gis/completePLUdata_{inter}sec/OD({a}-{b}_{c}-{d})_home_seed{ss}.CSV'.
+        #                    format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5],ss=seed),header=True, index=True)
+        # ODMatrix_work.to_csv('D:/ax/gis/completePLUdata_{inter}sec/OD({a}-{b}_{c}-{d})_work_seed{ss}.CSV'.
+        #                    format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5],ss=seed),header=True, index=True)
+        # ODMatrix_other.to_csv('D:/ax/gis/completePLUdata_{inter}sec/OD({a}-{b}_{c}-{d})_other_seed{ss}.CSV'.
+        #                    format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5],ss=seed),header=True, index=True)
 
-        ODoriginal = pd.read_csv('D:/ax/OD({a}-{b}_{c}-{d}).CSV'.
+        # ODoriginal = pd.read_csv('D:/ax/OD({a}-{b}_{c}-{d}).CSV'.
+        #                    format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5]))
+        ODoriginal = pd.read_csv('/data/zahraeftekhar/research_temporal/output_base/OD({a}-{b}_{c}-{d}).CSV'.
                            format(inter = interval,a=ODstart[0:2], b= ODstart[3:5], c = ODend[0:2], d=ODend[3:5]))
         ODoriginal = ODoriginal.set_index('Unnamed: 0')
         print(np.sum(np.sum(ODoriginal, axis=0))) #13353 ************

@@ -1,23 +1,19 @@
 
 ######################################### importing XML file plan ######################################################
-from lxml import etree
-parser = etree.XMLParser(ns_clean=True, collect_ids=False)
+import xml.etree.ElementTree as etree
+# from lxml import etree
+# parser = etree.XMLParser(ns_clean=True, collect_ids=False)
 # itemlistPlan = etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
 #                         "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans.xml").getroot().findall('person')
 # itemlist= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples"
 #                         "/Results_PlanWithOnlyCar_30secSnapShot/ITERS/it.1/1.plans_Nogeneric(all allowed).xml").getroot().findall('person')
-itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim_directory/matsim-example-project/scenarios/" \
-              "example_zahra/Amsterdam/original files/PlanWithOnlyCar_again_NoGeneric.xml").getroot().findall('person')
+itemlistExperienced= etree.parse("D:/ax/gis/output_base/PlanWithOnlyCar_again_NoGeneric_NoZeroDuationActivity.xml").getroot().findall('person')
+# itemlistExperienced= etree.parse("/data/zahraeftekhar/research_temporal/output_base/PlanWithOnlyCar_again_NoGeneric_NoZeroDuationActivity.xml").getroot().findall('person')
 ######################################### deriving activity duration and traveling duration from plan files ###########################################
 import numpy as np
 import pandas as pd
 import time
-import datetime
-import statistics as st
-from duration import(to_seconds, to_tuple)
-from matplotlib import pyplot as plt
-from decimal import *
-from shapely.geometry import Point
+# from duration import(to_seconds, to_tuple)
 # m=0
 start_time = time.time()
 homeloc = []
@@ -75,23 +71,26 @@ tripDurations = []
 # trips['duration(sec)']=None
 # trips['X']=None
 # trips['Y']=None
-m=2
+m=0
 for m in range(len(itemlistExperienced)):#indices
     # end =to_seconds( itemlistExperienced[m].find('plan/activity').get('end_time'),strict=False)+24*3600#end of first activity in the next day
     # allowedIDs += [itemlistExperienced[m].get('id')]
-    end = to_seconds(itemlistExperienced[m].find('plan/activity').get('end_time'),
-                     strict=False) + 24 * 3600  # end of first activity in the next day
+    end = pd.to_timedelta(itemlistExperienced[m].find('plan/activity').get('end_time')).total_seconds() + pd.to_timedelta(24*3600,unit='s').total_seconds() # end of first activity in the next day
     # firstActivity = itemlistExperienced[m].find('plan/activity').get('type')
     firstActivity = itemlistExperienced[m].find('plan/activity').get('type')
     # itemlistExperienced[m].xpath('plan/activity[attribute::type]')[0].attrib['type'] != 'home'
     otherIndices = []
-    for n in range(len(itemlistExperienced[m].xpath('plan/activity'))):
-        if itemlistExperienced[m].xpath('plan/activity[attribute::type]')[n].attrib['type'] != 'home'\
-                and itemlistExperienced[m].xpath('plan/activity[attribute::type]')[n].attrib['type'] != 'work':
+    n=0
+    for n in range(len(itemlistExperienced[m].findall('plan/activity'))):
+        # if itemlistExperienced[m].xpath('plan/activity[attribute::type]')[n].attrib['type'] != 'home'\
+        #         and itemlistExperienced[m].xpath('plan/activity[attribute::type]')[n].attrib['type'] != 'work':
+        if itemlistExperienced[m].findall('plan/activity')[n].get('type') != 'home' \
+                and itemlistExperienced[m].findall('plan/activity')[n].get('type') != 'work':
             otherIndices+=[int(n)]
-    for p in range(len(itemlistExperienced[m].xpath('plan/leg'))):
-        tripStarts += [to_seconds( itemlistExperienced[m].xpath('plan/leg')[p].get('dep_time'), strict=False).__int__()]
-        tripDurations += [to_seconds(pd.Timedelta(itemlistExperienced[m].xpath('plan/leg')[p].get('trav_time')), strict=False).__int__()]
+    p=0
+    for p in range(len(itemlistExperienced[m].findall('plan/leg'))):
+        tripStarts += [pd.to_timedelta( itemlistExperienced[m].findall('plan/leg')[p].get('dep_time')).total_seconds().__int__()]
+        tripDurations += [(pd.Timedelta(itemlistExperienced[m].findall('plan/leg')[p].get('trav_time'))).total_seconds().__int__()]
         # trips.insert(loc=-1,column='start_time(sec)',value=to_seconds( itemlistExperienced[m].xpath('plan/leg')[p].get('dep_time'), strict=False).__int__())
         # trips.insert(loc = -1, column='duration(sec)', value=to_seconds(pd.Timedelta(itemlistExperienced[m].xpath('plan/leg')[p].get('trav_time')), strict=False).__int__())
 
@@ -117,23 +116,23 @@ for m in range(len(itemlistExperienced)):#indices
     while j < len(home):
         # if to_seconds( home[j].get('start_time'), strict=False).__int__()==7200:
         #     print([itemlistExperienced[m].get('id')])
-        homeStarts += [to_seconds( home[j].get('start_time'), strict=False).__int__()]
-        homeDurations += [to_seconds((end if home[j].get('end_time') is None else  home[j].get('end_time')), strict=False).__int__() - \
-                          to_seconds(home[j].get('start_time') , strict=False).__int__()]
+        homeStarts += [pd.to_timedelta( home[j].get('start_time'),unit='s').total_seconds().__int__()]
+        homeDurations += [pd.to_timedelta((end if home[j].get('end_time') is None else  home[j].get('end_time')),unit='s').total_seconds().__int__() - \
+                          pd.to_timedelta(home[j].get('start_time'),unit='s').total_seconds().__int__()]
         j+=1
     k=0
     while k < len(work):
-        workStarts += [ to_seconds(work[k].get('start_time'), strict=False).__int__()]
-        workDurations += [to_seconds((end if work[k].get(
-            'end_time') is None else work[k].get('end_time')), strict=False).__int__() - \
-                         to_seconds(work[k].get('start_time'), strict=False).__int__()]
+        workStarts += [ pd.to_timedelta(work[k].get('start_time'),unit='s').total_seconds().__int__()]
+        workDurations += [pd.to_timedelta((end if work[k].get(
+            'end_time') is None else work[k].get('end_time')),unit='s').total_seconds().__int__() - \
+                         pd.to_timedelta(work[k].get('start_time'),unit='s').total_seconds().__int__()]
         k += 1
     l = 0
     while l < len(other):
-        otherStarts += [to_seconds(other[l].get('start_time'), strict=False).__int__()]
-        otherDurations += [to_seconds((end if other[l].get(
-            'end_time') is None else other[l].get('end_time')), strict=False).__int__() - \
-                          to_seconds(other[l].get('start_time'), strict=False).__int__()]
+        otherStarts += [pd.to_timedelta(other[l].get('start_time'),unit='s').total_seconds().__int__()]
+        otherDurations += [pd.to_timedelta((end if other[l].get(
+            'end_time') is None else other[l].get('end_time')),unit='s').total_seconds().__int__() - \
+                          pd.to_timedelta(other[l].get('start_time'),unit='s').total_seconds().__int__()]
         l += 1
 
     # __________________________________________________________________________________________
@@ -164,16 +163,26 @@ activityDurations = pd.DataFrame(activityDurations, columns = ['duration(sec)'])
 activityStarts = pd.concat([homeStarts['start_time(sec)'],workStarts['start_time(sec)'],otherStarts['start_time(sec)']],axis=0,ignore_index=True)
 activityStarts = pd.DataFrame(activityStarts , columns=['start_time(sec)'])
 activityStarts['type'] = activityTypes['type']
-tripStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.tripStarts.csv",header=True,index=False)
-activityStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.activityStarts.csv",header=True,index=False)
-tripDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.tripDurations.CSV",header=True,index=False)
-activityDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.activityDurations.CSV",header=True,index=False)
-homeStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.homeStarts.CSV",header=True,index=False)
-workStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.workStarts.CSV",header=True,index=False)
-otherStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.otherStarts.CSV",header=True,index=False)
-homeDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.homeDurations.CSV",header=True,index=False)
-workDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.workDurations.CSV",header=True,index=False)
-otherDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.otherDurations.CSV",header=True,index=False)
+# tripStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.tripStarts.csv",header=True,index=False)
+# activityStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.activityStarts.csv",header=True,index=False)
+# tripDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.tripDurations.CSV",header=True,index=False)
+# activityDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.activityDurations.CSV",header=True,index=False)
+# homeStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.homeStarts.CSV",header=True,index=False)
+# workStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.workStarts.CSV",header=True,index=False)
+# otherStarts.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.otherStarts.CSV",header=True,index=False)
+# homeDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.homeDurations.CSV",header=True,index=False)
+# workDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.workDurations.CSV",header=True,index=False)
+# otherDurations.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.otherDurations.CSV",header=True,index=False)
+tripStarts.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.tripStarts.csv",header=True,index=False)
+activityStarts.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.activityStarts.csv",header=True,index=False)
+tripDurations.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.tripDurations.CSV",header=True,index=False)
+activityDurations.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.activityDurations.CSV",header=True,index=False)
+homeStarts.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.homeStarts.CSV",header=True,index=False)
+workStarts.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.workStarts.CSV",header=True,index=False)
+otherStarts.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.otherStarts.CSV",header=True,index=False)
+homeDurations.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.homeDurations.CSV",header=True,index=False)
+workDurations.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.workDurations.CSV",header=True,index=False)
+otherDurations.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/1.otherDurations.CSV",header=True,index=False)
 
 # homeloc = pd.DataFrame(homeloc, columns=['lon-lat'])
 # workloc = pd.DataFrame(workloc, columns=['lon-lat'])

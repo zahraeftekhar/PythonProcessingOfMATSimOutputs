@@ -1,28 +1,32 @@
 import pandas as pd
-from shapely.geometry import Point
+# from shapely.geometry import Point
 import time
 from math import floor
 import numpy as np
 startTime = time.time()
 # todo: go to Arcmap and using the intersect geospatial tool make a file with Mezuro zone id
-# # # # # ____________________________________completing GIS output for out of Mezuro map points ______________________________
+# # # # ____________________________________completing GIS output for out of Mezuro map points ______________________________
 # precompletion = pd.read_csv('D:/ax/gis/MATSimOutput_snapshot30sec/GISoutput_PreCompletion.CSV',usecols=['mzr_id', 'VEHICLE','TIME','EASTING','NORTHING'])
-# precompletion = precompletion.sort_values(by=["VEHICLE","TIME"])
-# precompletion = precompletion.reset_index(drop=True)
+precompletion = pd.read_csv('/data/zahraeftekhar/research_temporal/input_base/GISoutput_PreCompletion.CSV',usecols=['mzr_id', 'VEHICLE','TIME','EASTING','NORTHING'])
+precompletion = precompletion.sort_values(by=["VEHICLE","TIME"])
+precompletion = precompletion.reset_index(drop=True)
 # MATSimOutput = pd.read_csv('D:/ax/gis/MATSimOutput_snapshot30sec/MATSimCompleteData.CSV',usecols=['VEHICLE','TIME','EASTING','NORTHING'])
-# MATSimOutput['VEHICLE'] = MATSimOutput.VEHICLE.astype(int)
-# MATSimOutput['TIME'] = MATSimOutput.TIME.astype(int)
-# MATSimOutput = MATSimOutput.sort_values(by=["VEHICLE","TIME"])
-# MATSimOutput=MATSimOutput.reset_index(drop=True)
-# completeData = pd.merge(precompletion, MATSimOutput, how='right', on=['VEHICLE','TIME'])
-# (completeData.loc[:,'mzr_id'][completeData['mzr_id'].isna()]) = 0.0
-# completeData = completeData.loc[:,['VEHICLE','TIME','EASTING_y','NORTHING_y','mzr_id']]
-# completeData.columns = ['VEHICLE', 'TIME', 'EASTING', 'NORTHING', 'mzr_id']
-# completeData = completeData.sort_values(by = ['VEHICLE', 'TIME'])
+MATSimOutput = pd.read_csv('/data/zahraeftekhar/research_temporal/output_base/snapShot_allowedUsers.CSV',usecols=['VEHICLE','TIME','EASTING','NORTHING'])
+MATSimOutput['VEHICLE'] = MATSimOutput.VEHICLE.astype(int)
+MATSimOutput['TIME'] = MATSimOutput.TIME.astype(int)
+MATSimOutput = MATSimOutput.sort_values(by=["VEHICLE","TIME"])
+MATSimOutput=MATSimOutput.reset_index(drop=True)
+completeData = pd.merge(precompletion, MATSimOutput, how='right', on=['VEHICLE','TIME'])
+(completeData.loc[:,'mzr_id'][completeData['mzr_id'].isna()]) = 0.0
+completeData = completeData.loc[:,['VEHICLE','TIME','EASTING_y','NORTHING_y','mzr_id']]
+completeData.columns = ['VEHICLE', 'TIME', 'EASTING', 'NORTHING', 'mzr_id']
+completeData = completeData.sort_values(by = ['VEHICLE', 'TIME'])
 # completeData.to_csv('D:/ax/gis/locationMappingToMezuroZones/finalInputPython/finalInputPython.CSV', header=True,index=False)
+completeData.to_csv('/data/zahraeftekhar/research_temporal/input_base/finalInputPython.CSV', header=True,index=False)
 
 # _________________________________________________________________________________________________
-snapData = pd.read_csv('D:/ax/gis/locationMappingToMezuroZones/finalInputPython/finalInputPython.CSV', usecols=['VEHICLE','TIME', 'EASTING', 'NORTHING','mzr_id'])
+# snapData = pd.read_csv('D:/ax/gis/locationMappingToMezuroZones/finalInputPython/finalInputPython.CSV', usecols=['VEHICLE','TIME', 'EASTING', 'NORTHING','mzr_id'])
+snapData = pd.read_csv('/data/zahraeftekhar/research_temporal/input_base/finalInputPython.CSV', usecols=['VEHICLE','TIME', 'EASTING', 'NORTHING','mzr_id'])
 snapData = snapData.sort_values(by=["VEHICLE","TIME"], ignore_index=True)
 vehicleIDs = snapData.VEHICLE.unique()
 snapshotInterval = 30 # todo: please enter snapshot interval from the simulation in seconds.
@@ -93,15 +97,19 @@ for i,driver in enumerate(vehicleIDs[1000*(mm+1):len(vehicleIDs)]): # fixme
                 rep = pd.concat([rep,rep1])
         extendedData = pd.concat([extendedData,rep])
 concatData=pd.concat([concatData,extendedData])
-print(time.time() - startTime) # it took 51670.19287753105 seconds (more than 14 hours)!!!!!
+print('file 6 takes {tt} min to run'.format(tt=round((time.time() - startTime)/60))) # it took 51670.19287753105 seconds (more than 14 hours)!!!!!
 
 
 snapDataNew = pd.concat([snapData, concatData])
 snapDataNewSorted = snapDataNew.sort_values(by=["VEHICLE","TIME"])
 snapDataSplit = np.array_split(snapDataNewSorted, 10)
 for l in range(10):
-    pd.DataFrame(snapDataSplit[l]).to_csv("D:/ax/gis/completePLUdata_30sec/completePLUdata_30sec_{0}.csv".format(l),
+    # pd.DataFrame(snapDataSplit[l]).to_csv("D:/ax/gis/completePLUdata_30sec/completePLUdata_30sec_{0}.csv".format(l),
+    #                                       header=True, index=False)
+    pd.DataFrame(snapDataSplit[l]).to_csv("/data/zahraeftekhar/research_temporal/completePLUdata_30sec/completePLUdata_30sec_{0}.csv".format(l),
                                           header=True, index=False)
 # pd.core.groupby.GroupBy.get_group(snapDataNewSorted, 'VEHICLE')
-snapDataNewSorted.to_csv("D:/ax/gis/completePLUdata_30sec/completePLUdata_30sec.csv",
+# snapDataNewSorted.to_csv("D:/ax/gis/completePLUdata_30sec/completePLUdata_30sec.csv",
+#                                           header=True, index=False)
+snapDataNewSorted.to_csv("/data/zahraeftekhar/research_temporal/completePLUdata_30sec/completePLUdata_30sec.csv",
                                           header=True, index=False)
