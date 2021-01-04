@@ -1,19 +1,16 @@
 
 ######################################### importing XML file plan ######################################################
-from lxml import etree
-parser = etree.XMLParser(ns_clean=True, collect_ids=False)
-itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim_directory/matsim-example-project/scenarios/" \
-              "example_zahra/Amsterdam/original files/PlanWithOnlyCar_again_NoGeneric.xml").getroot().findall('person')
+# from lxml import etree
+# parser = etree.XMLParser(ns_clean=True, collect_ids=False)
+import xml.etree.ElementTree as etree
+# itemlistExperienced= etree.parse("C:/Users/zahraeftekhar/eclipse-workspace/matsim_directory/matsim-example-project/scenarios/" \
+#               "example_zahra/Amsterdam/original files/PlanWithOnlyCar_again_NoGeneric_NoZeroDuationActivity.xml").getroot().findall('person')
+itemlistExperienced= etree.parse("/data/zahraeftekhar/research_temporal/output_base/PlanWithOnlyCar_again_NoGeneric_NoZeroDuationActivity.xml").getroot().findall('person')
 ######################################### deriving activity duration and traveling duration from plan files ###########################################
 import numpy as np
 import pandas as pd
 import time
-import datetime
-import statistics as st
-from duration import(to_seconds, to_tuple)
-from matplotlib import pyplot as plt
-from decimal import *
-from shapely.geometry import Point
+# from duration import(to_seconds, to_tuple)
 import random
 from scipy.stats import gaussian_kde
 # m=0
@@ -45,17 +42,16 @@ for s, seed in enumerate(seedSet):
     random.seed(seed)
     indices = random.sample(range(len(itemlistExperienced)),round(.01*len(itemlistExperienced))) #1% sampling of users
     for index,m in enumerate(indices):#indices
-        end = to_seconds(itemlistExperienced[m].find('plan/activity').get('end_time'),
-                         strict=False) + 24 * 3600  # end of first activity in the next day
+        end = pd.to_timedelta(itemlistExperienced[m].find('plan/activity').get('end_time'),unit='s').total_seconds() + pd.to_timedelta(24*3600,unit='s').total_seconds()  # end of first activity in the next day
         firstActivity = itemlistExperienced[m].find('plan/activity').get('type')
         otherIndices = []
-        for n in range(len(itemlistExperienced[m].xpath('plan/activity'))):
-            if itemlistExperienced[m].xpath('plan/activity[attribute::type]')[n].attrib['type'] != 'home'\
-                    and itemlistExperienced[m].xpath('plan/activity[attribute::type]')[n].attrib['type'] != 'work':
+        for n in range(len(itemlistExperienced[m].findall('plan/activity'))):
+            if itemlistExperienced[m].findall('plan/activity')[n].get('type') != 'home'\
+                    and itemlistExperienced[m].findall('plan/activity')[n].get('type') != 'work':
                 otherIndices+=[int(n)]
-        for p in range(len(itemlistExperienced[m].xpath('plan/leg'))):
-            tripStarts += [to_seconds( itemlistExperienced[m].xpath('plan/leg')[p].get('dep_time'), strict=False).__int__()]
-            tripDurations += [to_seconds(pd.Timedelta(itemlistExperienced[m].xpath('plan/leg')[p].get('trav_time')), strict=False).__int__()]
+        for p in range(len(itemlistExperienced[m].findall('plan/leg'))):
+            tripStarts += [pd.to_timedelta( itemlistExperienced[m].findall('plan/leg')[p].get('dep_time'),unit='s').total_seconds().__int__()]
+            tripDurations += [pd.to_timedelta(pd.Timedelta(itemlistExperienced[m].findall('plan/leg')[p].get('trav_time'),unit='s'),unit='s').total_seconds().__int__()]
 
         if firstActivity == 'home':
             home = itemlistExperienced[m].findall('plan/activity[@type="home"]')[1:]
@@ -73,23 +69,23 @@ for s, seed in enumerate(seedSet):
 
         j=0
         while j < len(home):
-            homeStarts += [to_seconds( home[j].get('start_time'), strict=False).__int__()]
-            homeDurations += [to_seconds((end if home[j].get('end_time') is None else  home[j].get('end_time')), strict=False).__int__() - \
-                              to_seconds(home[j].get('start_time') , strict=False).__int__()]
+            homeStarts += [pd.to_timedelta( home[j].get('start_time'),unit='s').total_seconds().__int__()]
+            homeDurations += [pd.to_timedelta((end if home[j].get('end_time') is None else  home[j].get('end_time')),unit='s').total_seconds().__int__() - \
+                              pd.to_timedelta(home[j].get('start_time') ,unit='s').total_seconds().__int__()]
             j+=1
         k=0
         while k < len(work):
-            workStarts += [ to_seconds(work[k].get('start_time'), strict=False).__int__()]
-            workDurations += [to_seconds((end if work[k].get(
-                'end_time') is None else work[k].get('end_time')), strict=False).__int__() - \
-                             to_seconds(work[k].get('start_time'), strict=False).__int__()]
+            workStarts += [ pd.to_timedelta(work[k].get('start_time'),unit='s').total_seconds().__int__()]
+            workDurations += [pd.to_timedelta((end if work[k].get(
+                'end_time') is None else work[k].get('end_time')),unit='s').total_seconds().__int__() - \
+                             pd.to_timedelta(work[k].get('start_time'),unit='s').total_seconds().__int__()]
             k += 1
         l = 0
         while l < len(other):
-            otherStarts += [to_seconds(other[l].get('start_time'), strict=False).__int__()]
-            otherDurations += [to_seconds((end if other[l].get(
-                'end_time') is None else other[l].get('end_time')), strict=False).__int__() - \
-                              to_seconds(other[l].get('start_time'), strict=False).__int__()]
+            otherStarts += [pd.to_timedelta(other[l].get('start_time'),unit='s').total_seconds().__int__()]
+            otherDurations += [pd.to_timedelta((end if other[l].get(
+                'end_time') is None else other[l].get('end_time')),unit='s').total_seconds().__int__() - \
+                              pd.to_timedelta(other[l].get('start_time'),unit='s').total_seconds().__int__()]
             l += 1
     homeDurations = pd.DataFrame(homeDurations, columns=['duration(sec)'])
     workDurations = pd.DataFrame(workDurations, columns=['duration(sec)'])
@@ -137,32 +133,84 @@ for s, seed in enumerate(seedSet):
     train_otherData['start(hour)'] = otherStarts['start_time(sec)'] / 3600
     # ****************************************************************************************
     # ________________________ writing data: Trainset _________________________
-    train_tripData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_tripStarts_seed{ss}.csv".format(ss=seed),header=True,index=False)
-    train_activityData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_activityStarts_seed{ss}.csv".format(ss=seed),header=True,index=False)
-    train_homeData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_homeStarts_seed{ss}.CSV".format(ss=seed),header=True,index=False)
-    train_workData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_workStarts_seed{ss}.CSV".format(ss=seed),header=True,index=False)
-    train_otherData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_otherStarts_seed{ss}.CSV".format(ss=seed),header=True,index=False)
+    # train_tripData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_tripStarts_seed{ss}.csv".format(ss=seed),header=True,index=False)
+    # train_activityData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_activityStarts_seed{ss}.csv".format(ss=seed),header=True,index=False)
+    # train_homeData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_homeStarts_seed{ss}.CSV".format(ss=seed),header=True,index=False)
+    # train_workData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_workStarts_seed{ss}.CSV".format(ss=seed),header=True,index=False)
+    # train_otherData.to_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_otherStarts_seed{ss}.CSV".format(ss=seed),header=True,index=False)
+
+    train_tripData.to_csv(
+        "/data/zahraeftekhar/research_temporal/GTanalysis/train_tripStarts_seed{ss}.csv".format(
+            ss=seed), header=True, index=False)
+    train_activityData.to_csv(
+        "/data/zahraeftekhar/research_temporal/GTanalysis/train_activityStarts_seed{ss}.csv".format(
+            ss=seed), header=True, index=False)
+    train_homeData.to_csv(
+        "/data/zahraeftekhar/research_temporal/GTanalysis/train_homeStarts_seed{ss}.CSV".format(
+            ss=seed), header=True, index=False)
+    train_workData.to_csv(
+        "/data/zahraeftekhar/research_temporal/GTanalysis/train_workStarts_seed{ss}.CSV".format(
+            ss=seed), header=True, index=False)
+    train_otherData.to_csv(
+        "/data/zahraeftekhar/research_temporal/GTanalysis/train_otherStarts_seed{ss}.CSV".format(
+            ss=seed), header=True, index=False)
+    # ______________reading trainsets _____________________________
+    # train_tripData=pd.read_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_tripStarts_seed{ss}.csv".format(ss=seed))
+    # train_activityData=pd.read_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_activityStarts_seed{ss}.csv".format(ss=seed))
+    # train_homeData=pd.read_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_homeStarts_seed{ss}.CSV".format(ss=seed))
+    # train_workData=pd.read_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_workStarts_seed{ss}.CSV".format(ss=seed))
+    # train_otherData=pd.read_csv("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/train_otherStarts_seed{ss}.CSV".format(ss=seed))
+
+    # train_tripData=pd.read_csv("/data/zahraeftekhar/research_temporal/GTanalysis/train_tripStarts_seed{ss}.csv".format(ss=seed))
+    # train_activityData=pd.read_csv("/data/zahraeftekhar/research_temporal/GTanalysis/train_activityStarts_seed{ss}.csv".format(ss=seed))
+    # train_homeData=pd.read_csv("/data/zahraeftekhar/research_temporal/GTanalysis/train_homeStarts_seed{ss}.CSV".format(ss=seed))
+    # train_workData=pd.read_csv("/data/zahraeftekhar/research_temporal/GTanalysis/train_workStarts_seed{ss}.CSV".format(ss=seed))
+    # train_otherData=pd.read_csv("/data/zahraeftekhar/research_temporal/GTanalysis/train_otherStarts_seed{ss}.CSV".format(ss=seed))
+
+
     # ______________ importing required data _________________________
+    # tripStarts=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.tripStarts.csv")
+    # activityStarts=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.activityStarts.csv")
+    # tripDurations=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.tripDurations.CSV")
+    # activityDurations=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.activityDurations.CSV")
+    # homeStarts=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.homeStarts.CSV")
+    # workStarts=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.workStarts.CSV")
+    # otherStarts=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.otherStarts.CSV")
+    # homeDurations=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.homeDurations.CSV")
+    # workDurations=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.workDurations.CSV")
+    # otherDurations=pd.read_csv(
+    #     "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.otherDurations.CSV")
+
+
     tripStarts=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.tripStarts.csv")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.tripStarts.csv")
     activityStarts=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.activityStarts.csv")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.activityStarts.csv")
     tripDurations=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.tripDurations.CSV")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.tripDurations.CSV")
     activityDurations=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.activityDurations.CSV")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.activityDurations.CSV")
     homeStarts=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.homeStarts.CSV")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.homeStarts.CSV")
     workStarts=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.workStarts.CSV")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.workStarts.CSV")
     otherStarts=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.otherStarts.CSV")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.otherStarts.CSV")
     homeDurations=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.homeDurations.CSV")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.homeDurations.CSV")
     workDurations=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.workDurations.CSV")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.workDurations.CSV")
     otherDurations=pd.read_csv(
-        "C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/1.otherDurations.CSV")
+        "/data/zahraeftekhar/research_temporal/GTanalysis/1.otherDurations.CSV")
     # ________________________________________________________________
     test_activityData = pd.DataFrame()
     test_activityData['Duration(hour)'] = activityDurations['duration(sec)']/3600
@@ -243,8 +291,10 @@ for s, seed in enumerate(seedSet):
     sens_locActivity.loc[s,'activityRecognition'] = (len(test_data[test_data['predictedActivity']==test_data['type']]))/(len(test_data))
     sens_locActivity.loc[s,'overall'] = (sum(test_tripData['algorithm select trip'])+len(test_data[test_data['predictedActivity']==test_data['type']]))/(len(test_data)+len(test_tripData))
 
-sensitivityTable.to_excel("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/userSampling_onePercentLocationDetectionSensitivity.xlsx", header=True,index=False)
-sens_locActivity.to_excel('C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/userSampling_onePercentLocationActivityDetectionSensitivity.xlsx',header=True,index=False)
+# sensitivityTable.to_excel("C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/userSampling_onePercentLocationDetectionSensitivity.xlsx", header=True,index=False)
+# sens_locActivity.to_excel('C:/Users/zahraeftekhar/eclipse-workspace/matsim-code-examples/Results_AlbatrossAgentsCleaned_Stable_30secSnapShot/ITERS/it.1/userSampling_onePercentLocationActivityDetectionSensitivity.xlsx',header=True,index=False)
+sensitivityTable.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/userSampling_onePercentLocationDetectionSensitivity.CSV", header=True,index=False)
+sens_locActivity.to_csv('/data/zahraeftekhar/research_temporal/GTanalysis/userSampling_onePercentLocationActivityDetectionSensitivity.CSV',header=True,index=False)
 # then use snapshot file of MATSim as input of ArcGIS to map the locations to their OD zone
 
 
