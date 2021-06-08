@@ -21,6 +21,8 @@ activities["home"][activities["home"].isnull()] = "0.33"
 activities["work"][activities["work"].isnull()] = "0.33"
 activities["other"][activities["other"].isnull()] = "0.33"
 del activities["deviance"]
+with open('D:/ax/gis/phase2/activities_c.pickle', 'wb') as handle:
+    pickle.dump(activities, handle, protocol=pickle.HIGHEST_PROTOCOL)
 ######################################### deriving activity duration and traveling duration from plan files ###########################################
 start_time = time.time()
 # _______________test seed based on user sampling _________________________________
@@ -39,6 +41,12 @@ for s, seed in enumerate(seedSet):
     trainIDs.columns = ["id"]
     trainingSet_trips = (trainIDs.merge(trips, on=["id"], how="inner", sort=True,validate="1:m"))
     trainingSet_activities = (trainIDs.merge(activities, on=["id"], how="inner", sort=True,validate="1:m"))
+    with open('D:/ax/gis/phase2/trainingActivity_seed{s}.pickle'.format(s=seed), 'wb') as handle:
+        pickle.dump(trainingSet_activities, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('D:/ax/gis/phase2/trainingTrip_seed{s}.pickle'.format(s=seed), 'wb') as handle:
+        pickle.dump(trainingSet_trips, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
     trainingSet_home = trainingSet_activities[trainingSet_activities["type"] == "home"]
     trainingSet_work = trainingSet_activities[trainingSet_activities["type"] == "work"]
     trainingSet_other = trainingSet_activities[trainingSet_activities["type"] == "other"]
@@ -169,7 +177,16 @@ for s, seed in enumerate(seedSet):
     sensitivityTable.loc[seed, "other accuracy"] = len(other[other['activity?']=='Log prob other'])/len(other)
 #   print("other accuracy: ",len(other[other['activity?']=='Log prob other'])/len(other))
 #     ***************************************************************************
+    home.to_csv("D:/ax/gis/phase2/trainingHome_seed{s}.CSV".format(s=seed),index=False,header=True)
+    work.to_csv("D:/ax/gis/phase2/trainingWork_seed{s}.CSV".format(s=seed),index=False,header=True)
+    other.to_csv("D:/ax/gis/phase2/trainingOther_seed{s}.CSV".format(s=seed),index=False,header=True)
 
+    with open('D:/ax/gis/phase2/trainingHome_seed{s}.pickle'.format(s=seed), 'wb') as handle:
+        pickle.dump(home, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('D:/ax/gis/phase2/trainingWork_seed{s}.pickle'.format(s=seed), 'wb') as handle:
+        pickle.dump(work, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('D:/ax/gis/phase2/trainingOther_seed{s}.pickle'.format(s=seed), 'wb') as handle:
+        pickle.dump(other, handle, protocol=pickle.HIGHEST_PROTOCOL)
 sensitivityTable.to_excel("D:/ax/gis/phase2/userSampling_onePercentLocationDetectionSensitivity.xlsx", header=True,
                           index=True)
 # sensitivityTable.to_csv("/data/zahraeftekhar/research_temporal/GTanalysis/userSampling_onePercentLocationDetectionSensitivity.CSV", header=True,index=False)
