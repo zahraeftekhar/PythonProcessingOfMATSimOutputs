@@ -1,17 +1,22 @@
-import xml.etree.ElementTree as ET
+# import xml.etree.ElementTree as ET
 import time
 import pandas as pd
+import xmltodict
+import numpy as np
 startTime = time.time()
-tree = ET.parse("D:/ax/gis/input_base/1.experienced_plans.xml")
-# tree = ET.parse("/data/zahraeftekhar/research_temporal/input_base/1.experienced_plans.xml")
-root = tree.getroot()
+tree = xmltodict.parse(open("D:/ax/gis/input_base/1.experienced_plans.xml","rb"))
+# tree = xmltodict.parse(open("/data/zahraeftekhar/research_temporal/input_base/1.experienced_plans.xml","rb"))
+root = tree['population']['person']
+
+
+
+
 RemoveIDs = [(int)]
-for child in root.findall('person'):
-    aa = len(list(child.iter('leg')))
-    ID2 = [int(child.get('id'))]
-    if child.findall('plan/leg[@mode="car"]').__len__() != aa:
+for child in root:
+    aa = len(child['plan']['leg'])
+    ID2 = [int(child['@id'])]
+    if all(flag["@mode"]=="car" for flag in child['plan']['leg'])==False:
         RemoveIDs += [ID2]
-        root.remove(child)
 XMLFileName = "D:/ax/gis/output_base/PlanWithOnlyCar_again.xml"
 # XMLFileName = "/data/zahraeftekhar/research_temporal/output_base/PlanWithOnlyCar_again.xml"
 tree.write(str(XMLFileName), encoding="UTF-8", method="xml",
