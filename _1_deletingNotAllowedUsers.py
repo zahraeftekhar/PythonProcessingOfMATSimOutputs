@@ -13,16 +13,36 @@ root = tree['population']['person']
 
 RemoveIDs = [(int)]
 for child in root:
-    aa = len(child['plan']['leg'])
-    ID2 = [int(child['@id'])]
-    if all(flag["@mode"]=="car" for flag in child['plan']['leg'])==False:
-        RemoveIDs += [ID2]
-XMLFileName = "D:/ax/gis/output_base/PlanWithOnlyCar_again.xml"
+    # remove IDs that did not travel
+    if len(child["plan"]["activity"])<3:
+        RemoveIDs += [int(child['@id'])]
+
+    # remove IDs that used any mode other than `car`
+    elif not all(flag["@mode"] == "car" for flag in child['plan']['leg']):
+        RemoveIDs += [int(child['@id'])]
+
+    # remove IDs that their 1st and last activity are not similar
+    # this is done to be able to have a round travel diary
+    elif child["plan"]["activity"][0]["@type"]!=child["plan"]["activity"][-1]["@type"]:
+        RemoveIDs += [int(child['@id'])]
+
+    # remove IDs with zero duration activities:
+    # 1) removing `generic`legs because they usually lead to zero duration activities
+    elif not all(flag['route']['@type'] != 'generic' for flag in child['plan']['leg']):
+        RemoveIDs += [int(child['@id'])]
+
+    # 2) remove the rest of IDs with zero or negative duration activities
+    elif not all((pd.to_timedelta(flag['@end_time'])).total_seconds() -
+                 (pd.to_timedelta(flag['@start_time'])).total_seconds() > 0
+                 for flag in child['plan']['activity'][1:-1]):
+        RemoveIDs += [int(child['@id'])]
+
+# XMLFileName = "D:/ax/gis/output_base/PlanWithOnlyCar_again.xml"
 # XMLFileName = "/data/zahraeftekhar/research_temporal/output_base/PlanWithOnlyCar_again.xml"
-tree.write(str(XMLFileName), encoding="UTF-8", method="xml",
-           xml_declaration=True)
+# tree.write(str(XMLFileName), encoding="UTF-8", method="xml",
+#            xml_declaration=True)
 forbiddenIDs = []
-noGeneric = []
+# noGeneric = []
 for m, person in enumerate(root.findall('person')):
     legListExperienced = person.findall('plan/leg/route')
     nn=0
