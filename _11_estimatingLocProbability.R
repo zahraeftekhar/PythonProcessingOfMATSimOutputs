@@ -15,10 +15,10 @@ amsterdamMezuroZones$code <- 1:dim(amsterdamMezuroZones)[1]
 amsterdamMezuroZones <- amsterdamMezuroZones[order(amsterdamMezuroZones$location),]
 ACTS <-  c("Home","Work","Other")
 acts <- c("home","work","other")
+prop <- 0.1
 data_all <- data.frame()
 for (ACT in ACTS){
-  data_act = data.table(read.csv(paste0(savingLoc,"training",ACT,'_prob',prob,'.CSV')))[ ,c("VEHICLE","activityType"
-                                                                                        ,"start","duration","x","y","mzr_id")]
+  data_act = assign(paste0("data_",ACT),data.table(read.csv(paste0(savingLoc,"training",ACT,'_prop',prop,'.CSV'))))
   data_all <- rbind(data_all,data_act)
 }
 data_all$actCategory <- 3
@@ -164,19 +164,19 @@ for (loc in 1:length(amsterdamMezuroZones$location)){
   
 }
 
-home <- data.table(table(data_home$mzr_id))
+home <- data.table(table(data_Home$mzr_id))
 colnames(home) <- c("location","freq")
 home$location <- as.integer(home$location)
 home <- merge(home,amsterdamMezuroZones,by="location",all=TRUE)
 home$freq[is.na(home$freq)] = 0.001
 
-work <- data.table(table(data_work$mzr_id))
+work <- data.table(table(data_Work$mzr_id))
 colnames(work) <- c("location","freq")
 work$location <- as.integer(work$location)
 work <- merge(work,amsterdamMezuroZones,by="location",all=TRUE)
 work$freq[is.na(work$freq)] = 0.001
 
-other <- data.table(table(data_other$mzr_id))
+other <- data.table(table(data_Other$mzr_id))
 colnames(other) <- c("location","freq")
 other$location <- as.integer(other$location)
 other <- merge(other,amsterdamMezuroZones,by="location",all=TRUE)
