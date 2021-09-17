@@ -9,52 +9,45 @@ library(coda)
 library(lattice)
 library(hesim)
 savingLoc = "Y:/ZahraEftekhar/phase4/"
-amsterdamMezuroZones = data.table(read.csv('{savingLoc}amsterdamMezuroZones.CSV')[ ,c('mzr_id')])
+amsterdamMezuroZones = data.table(read.csv(paste0(savingLoc,"amsterdamMezuroZones.CSV"))[ ,c('mzr_id')])
 colnames(amsterdamMezuroZones) <- c("location")
 amsterdamMezuroZones$code <- 1:dim(amsterdamMezuroZones)[1]
 amsterdamMezuroZones <- amsterdamMezuroZones[order(amsterdamMezuroZones$location),]
-ACTS <- c("Home","Work","Other")
+ACTS <-  c("Home","Work","Other")
 acts <- c("home","work","other")
 data_all <- data.frame()
-for (seed in 101:101) {
-   
-  for (ACT in acts){
-    data_ACT = read.csv(paste0(savingLoc,"training",ACT,"_seed",seed,'.CSV'))
-    data_all <- rbind(data_all,data_ACT)
-  }
-  data_all$actCategory <- 3
-  for (act in acts[1:length(acts)-1]){
-    
-    data_all$actCategory[data_all$activityType == act] <-
-      data_all$activityType[data_all$activityType == act]
-  }
-
-  # data_activity <- read.csv(paste0(savingLoc,"trainingActivity_seed",seed,'.CSV'))
-  # data_trip <- read.csv(paste0(savingLoc,"trainingTrip_seed",seed,'.CSV'))
-  # data_home <- read.csv(paste0(savingLoc,"trainingHome_seed",seed,'.CSV'))
-  # data_work <- read.csv(paste0(savingLoc,"trainingWork_seed",seed,'.CSV'))
-  # data_other <- read.csv(paste0(savingLoc,"trainingOther_seed",seed,'.CSV'))
+for (ACT in ACTS){
+  data_act = data.table(read.csv(paste0(savingLoc,"training",ACT,'_prob',prob,'.CSV')))[ ,c("VEHICLE","activityType"
+                                                                                        ,"start","duration","x","y","mzr_id")]
+  data_all <- rbind(data_all,data_act)
+}
+data_all$actCategory <- 3
+for (act in acts[1:length(acts)-1]){
+  
+  data_all$actCategory[data_all$activityType == act] <-
+    data_all$activityType[data_all$activityType == act]
 }
 
-
-data_home <- read.csv("D:/ax/gis/phase2/train_home_zoneLabled.csv"
-)[ ,c("VEHICLE","activityType"
-      ,"start","duration","x","y","mzr_id")]
-data_work <- read.csv("D:/ax/gis/phase2/train_work_zoneLabled.csv"
-)[ ,c("VEHICLE","activityType"
-      ,"start","duration","x","y","mzr_id")]
-data_other <- read.csv("D:/ax/gis/phase2/train_other_zoneLabled.csv"
-)[ ,c("VEHICLE","activityType"
-      ,"start","duration","x","y","mzr_id")]
-
-
-
-data_all <- rbind(data_home,data_work,data_other)
-data_all$actCategory <- 3
-data_all$actCategory[data_all$activityType == "home"] <-
-  data_all$activityType[data_all$activityType == "home"]
-data_all$actCategory[data_all$activityType == "work"] <-
-  data_all$activityType[data_all$activityType == "work"]
+# 
+# 
+# data_home <- read.csv("D:/ax/gis/phase2/train_home_zoneLabled.csv"
+# )[ ,c("VEHICLE","activityType"
+#       ,"start","duration","x","y","mzr_id")]
+# data_work <- read.csv("D:/ax/gis/phase2/train_work_zoneLabled.csv"
+# )[ ,c("VEHICLE","activityType"
+#       ,"start","duration","x","y","mzr_id")]
+# data_other <- read.csv("D:/ax/gis/phase2/train_other_zoneLabled.csv"
+# )[ ,c("VEHICLE","activityType"
+#       ,"start","duration","x","y","mzr_id")]
+# 
+# 
+# 
+# data_all <- rbind(data_home,data_work,data_other)
+# data_all$actCategory <- 3
+# data_all$actCategory[data_all$activityType == "home"] <-
+#   data_all$activityType[data_all$activityType == "home"]
+# data_all$actCategory[data_all$activityType == "work"] <-
+#   data_all$activityType[data_all$activityType == "work"]
 # data_all$actCategory <- lapply(data_all$actCategory,as.integer)
 
 # boxplot(actCategory ~ mzr_id, data=data_all)
@@ -192,4 +185,4 @@ other$freq[is.na(other$freq)] = 0.001
 data_allAct <- merge(home,work,by=c("code","location"))
 data_allAct <- merge(data_allAct,other,by=c("code","location"))
 colnames(modelParams) <- c("mzr_id","deviance","home","work","other")
-write.csv(modelParams,"D:/ax/gis/phase2/locProbability.csv", row.names = FALSE)
+write.csv(modelParams,paste0(savingLoc,"locProbability.csv"), row.names = FALSE)
